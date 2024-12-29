@@ -1,5 +1,5 @@
 
-# Cytoscape NetworkX Example
+# Dynamic Flowchart (using javascript)
 
 This repository contains a dynamic flowchart (graph)
 
