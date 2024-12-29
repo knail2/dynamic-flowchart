@@ -1,15 +1,53 @@
 {
-  "directed": false,
-  "multigraph": false,
-  "graph": {},
-  "nodes": [
-    { "id": "A", "label": "Node A" },
-    { "id": "B", "label": "Node B" },
-    { "id": "C", "label": "Node C" }
+  "style": [
+    {
+      "selector": "node",
+      "style": {
+        "shape": "round-rectangle",
+        "width": 60,
+        "height": 30,
+        "font-size": "8px",
+        "text-valign": "center",
+        "label": "data(label)",
+        "color": "#000",
+        "background-color": "#ccc",
+        "border-width": 1,
+        "border-color": "#000"
+      }
+    },
+    {
+      "selector": "edge",
+      "style": {
+        "width": 2,
+        "line-color": "#ccc",
+        "target-arrow-color": "#ccc",
+        "target-arrow-shape": "triangle",
+        "arrow-scale": 1.2,
+        "curve-style": "bezier"
+      }
+    },
+    {
+      "selector": ".hidden",
+      "style": {
+        "display": "none"
+      }
+    }
   ],
-  "links": [
-    { "source": "A", "target": "B" },
-    { "source": "B", "target": "C" }
-  ]
+  "elements": {
+    "nodes": [
+      { "data": { "id": "A", "label": "Node A" }, "position": { "x": 100, "y": 100 } },
+      { "data": { "id": "X", "label": "Node X" }, "position": { "x": 100, "y": 200 } },
+      { "data": { "id": "B", "label": "Node B" }, "classes": "hidden" },
+      { "data": { "id": "C", "label": "Node C" }, "classes": "hidden" },
+      { "data": { "id": "D", "label": "Node D" }, "classes": "hidden" },
+      { "data": { "id": "E", "label": "Node E" }, "classes": "hidden" }
+    ],
+    "edges": [
+      { "data": { "id": "A-B", "source": "A", "target": "B" }, "classes": "hidden" },
+      { "data": { "id": "X-B", "source": "X", "target": "B" }, "classes": "hidden" },
+      { "data": { "id": "B-C", "source": "B", "target": "C" }, "classes": "hidden" },
+      { "data": { "id": "B-D", "source": "B", "target": "D" }, "classes": "hidden" },
+      { "data": { "id": "B-E", "source": "B", "target": "E" }, "classes": "hidden" }
+    ]
+  }
 }
-
