@@ -2,17 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Enhanced Cytoscape DAG Example</title>
+  <title>Dynamic Flowchart</title>
 
   <!-- Cytoscape core library -->
   <script src="https://unpkg.com/cytoscape@3.23.0/dist/cytoscape.min.js"></script>
-  
-  <!-- Dagre layout extension for left-to-right DAG -->
+
+  <!-- Dagre layout extension (left-to-right DAG) -->
   <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
   <script src="https://unpkg.com/cytoscape-dagre@2.4.0/cytoscape-dagre.js"></script>
-  
-  <!-- Popper + Tippy for hover tooltips -->
-  <script src="https://unpkg.com/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+
+  <!-- Tippy + Popper for tooltips -->
+  <script src="https://unpkg.com/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script> 
   <script src="https://unpkg.com/tippy.js@6.3.7/dist/tippy.umd.js"></script>
   <script src="https://unpkg.com/cytoscape-popper@1.0.8/cytoscape-popper.js"></script>
 
@@ -28,7 +28,6 @@
       height: 100%;
       display: block;
     }
-    /* Just to style the tooltip link a bit */
     .tooltip-content a {
       color: #007bff;
       text-decoration: underline;
@@ -38,7 +37,6 @@
 <body>
   <div id="cy"></div>
 
-  <!-- Our custom logic -->
   <script src="app.js"></script>
 </body>
 </html>

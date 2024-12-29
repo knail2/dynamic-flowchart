@@ -1,108 +1,127 @@
 document.addEventListener('DOMContentLoaded', function() {
-  // Fetch the data from data.json
+  // Fetch the JSON containing style, elements, and tooltips
+  //cytoscape.use(cytoscapePopper);
   fetch('data.json')
     .then(response => response.json())
     .then(json => {
-      // Initialize Cytoscape with style and elements from data.json
+      // 1) Initialize Cytoscape with style & elements from data.json
+      //cytoscape.use(cytoscapePopper);
       const cy = cytoscape({
         container: document.getElementById('cy'),
-        style: json.style,          // <--- style from data.json
-        elements: json.elements,    // <--- elements from data.json
+        style: json.style,
+        elements: json.elements,
         layout: {
           name: 'dagre',
-          rankDir: 'LR'  // Left-to-right layout
+          rankDir: 'LR'
         }
       });
 
-      // Helper: show or hide elements by removing/adding the 'hidden' class
-      function showElementById(id) {
+      // 2) Toggling logic for Node A and Node B
+      function isHidden(id) {
+        return cy.getElementById(id).hasClass('hidden');
+      }
+      function show(id) {
         cy.getElementById(id).removeClass('hidden');
       }
-      function hideElementById(id) {
+      function hide(id) {
         cy.getElementById(id).addClass('hidden');
       }
-
-      // Helper: change node style (fill/outline)
-      function styleNode(node, fillColor, outlineColor) {
-        node.style('background-color', fillColor);
-        node.style('border-color', outlineColor);
+      function setNodeColor(node, fill, outline) {
+        node.style('background-color', fill);
+        node.style('border-color', outline);
       }
 
-      // On click of Node A
-      cy.on('tap', 'node[id = "A"]', function(evt) {
-        const nodeA = evt.target;
-        
-        // Change Node A to sea blue fill, navy blue outline
-        styleNode(nodeA, '#5bc0de', '#001f3f');
-
-        // Reveal Node B and edges A->B, X->B
-        showElementById('B');
-        showElementById('A-B');
-        showElementById('X-B');
-
-        // Style A->B edge as navy
-        cy.getElementById('A-B').style({
-          'line-color': '#001f3f',
-          'target-arrow-color': '#001f3f'
-        });
-
-        // Style Node B as light blue fill, UNC blue outline
+      // ---- Click Node A: toggle Node B (and children if collapsed) ----
+      cy.on('tap', 'node[id="A"]', () => {
+        const nodeA = cy.getElementById('A');
         const nodeB = cy.getElementById('B');
-        styleNode(nodeB, '#add8e6', '#2b68c1');
 
-        // Rerun layout
+        if (isHidden('B')) {
+          // Expand
+          setNodeColor(nodeA, '#5bc0de', '#001f3f'); // sea blue + navy
+          show('B');
+          show('A-B');
+          show('X-B');
+          // Edge A->B is navy
+          cy.getElementById('A-B').style({
+            'line-color': '#001f3f',
+            'target-arrow-color': '#001f3f'
+          });
+          // B = light blue + UNC
+          setNodeColor(nodeB, '#add8e6', '#2b68c1');
+        } else {
+          // Collapse
+          setNodeColor(nodeA, '#ccc', '#000'); // revert to grey
+          hide('B');
+          hide('A-B');
+          hide('X-B');
+          // Also hide B's children
+          hide('C'); hide('B-C');
+          hide('D'); hide('B-D');
+          hide('E'); hide('B-E');
+          setNodeColor(nodeB, '#ccc', '#000'); 
+        }
+        // Re-run layout
         cy.layout({ name: 'dagre', rankDir: 'LR' }).run();
       });
 
-      // On click of Node B
-      cy.on('tap', 'node[id = "B"]', function(evt) {
-        const nodeB = evt.target;
+      // ---- Click Node B: toggle C, D, E ----
+      cy.on('tap', 'node[id="B"]', () => {
+        const nodeB = cy.getElementById('B');
 
-        // Change Node B to sea blue fill, navy outline
-        styleNode(nodeB, '#5bc0de', '#001f3f');
-
-        // Reveal C, D, E + edges B->C, B->D, B->E
-        showElementById('C');
-        showElementById('D');
-        showElementById('E');
-        showElementById('B-C');
-        showElementById('B-D');
-        showElementById('B-E');
-
-        // Rerun layout
+        if (isHidden('C')) {
+          // Expand
+          setNodeColor(nodeB, '#5bc0de', '#001f3f');
+          show('C'); show('B-C');
+          show('D'); show('B-D');
+          show('E'); show('B-E');
+        } else {
+          // Collapse
+          setNodeColor(nodeB, '#add8e6', '#2b68c1');
+          hide('C'); hide('B-C');
+          hide('D'); hide('B-D');
+          hide('E'); hide('B-E');
+        }
         cy.layout({ name: 'dagre', rankDir: 'LR' }).run();
       });
 
-      // ----- Tooltip logic for C, D, E ------
-      // We'll create a function that attaches a Tippy.js tooltip to each of these nodes.
-      function addTooltip(node) {
+      // 3) Tooltips for Leaf Nodes
+      // We'll assume "C, D, E" might have custom tooltip content in json.tooltips
+      // We create a fresh Tippy on mouseover, destroy it on mouseout
+      cy.on('mouseover', 'node[id="C"], node[id="D"], node[id="E"]', evt => {
+        const node = evt.target;
+        const nodeId = node.id();
+        const contentHtml = json.tooltips[nodeId] || 'No tooltip text';
+
+        // popperRef for positioning
         const ref = node.popperRef();
-        const tooltip = tippy(document.createElement('div'), {
-          content: `
-            <div class="tooltip-content" style="font-size:0.75rem;">
-              Lorem Ipsum<br>
-              <a href="https://google.com" target="_blank">https://google.com</a>
-            </div>`,
+        // Create new Tippy
+        const tip = tippy(document.createElement('div'), {
           allowHTML: true,
+          content: `<div class="tooltip-content" style="font-size:0.75rem;">
+                      ${contentHtml}
+                    </div>`,
           trigger: 'manual',
-          interactive: true
+          interactive: true,
+          appendTo: document.body
         });
-        node.on('mouseover', () => {
-          tooltip.setProps({ getReferenceClientRect: ref.getBoundingClientRect });
-          tooltip.show();
-        });
-        node.on('mouseout', () => {
-          tooltip.hide();
-        });
-      }
 
-      // Attach tooltips to nodes C, D, E
-      ['C', 'D', 'E'].forEach(id => {
-        const node = cy.getElementById(id);
-        addTooltip(node);
+        // Position & show
+        tip.setProps({
+          getReferenceClientRect: ref.getBoundingClientRect
+        });
+        tip.show();
+
+        // Hide on mouseout, then destroy
+        node.on('mouseout', () => {
+          tip.hide();
+          tip.destroy();
+        }, { once: true }); 
       });
+
+      // Done! The graph is ready, with toggling & tooltips from data.json
     })
-    .catch(error => {
-      console.error('Error loading data.json:', error);
+    .catch(err => {
+      console.error('Error fetching/using data.json:', err);
     });
 });
