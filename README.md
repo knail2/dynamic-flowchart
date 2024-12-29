@@ -49,7 +49,7 @@ You can easily host this static site on **GitHub Pages**:
 3. Under **"Pages"** (or **"Pages and Branches"**), select the **branch** you want to deploy from (typically `main`) and choose the root folder (`/`).  
 4. Wait a few seconds; GitHub Pages will provide a URL like:
    ```
-   https://your-username.github.io/my-cytoscape-project/
+   https://your-username.github.io/dynamic-flowchart/
    ```
 5. Navigate to that URL, and you’ll see your app!
 
