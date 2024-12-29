@@ -1,24 +1,21 @@
 
 # Cytoscape NetworkX Example
 
-This repository contains a minimal example of visualizing a graph in **Cytoscape.js** using a **NetworkX-compatible** JSON file (`data.json`).
+This repository contains a dynamic flowchart (graph)
 
 ## Getting Started
 
 1. **Clone or download** this repository to your local machine:
    ```bash
-   git clone https://github.com/your-username/my-cytoscape-project.git
+   git clone https://github.com/your-username/dynamic-flowchart.git
    ```
-   Or simply download and extract the ZIP file from GitHub.
 
-2. **Install a local development server with auto-reload.** There are two common approaches:
-
-   ### Option A: Using `npm install --save-dev` and `npx` (no root permissions needed)
+2. **Install a local development server with auto-reload.** 
    
    1. Ensure you have [Node.js](https://nodejs.org/) installed.  
    2. In your project folder, initialize an npm project if you haven’t already:
       ```bash
-      cd my-cytoscape-project
+      cd dynamic-flowchart
       npm init -y
       ```
    3. Install **live-server** as a dev dependency:
@@ -30,26 +27,13 @@ This repository contains a minimal example of visualizing a graph in **Cytoscape
       npx live-server
       ```
       This will open your browser at `http://127.0.0.1:8080`, loading `index.html`.
-      
-   ### Option B: Using a global live-server or other tools (may require root, unless using nvm)
    
-   - **live-server** (globally):
-     ```bash
-     npm install -g live-server
-     live-server
-     ```
-   - **browser-sync** (globally):
-     ```bash
-     npm install -g browser-sync
-     browser-sync start --server --files "index.html, app.js, data.json"
-     ```
 
-3. **Open the URL** in your browser, typically `http://127.0.0.1:8080` or whichever port is used.  
-4. You should see the Cytoscape graph with nodes and edges defined in `data.json`.
+3. You should see the Cytoscape graph with nodes and edges defined in `data.json`.
 
 ## Updating the Graph
 
-- If you edit `data.json` or any of the files, the page should automatically reload if using **live-server** or **browser-sync**. Otherwise, you can manually refresh the page.
+- If you edit `data.json` or any of the files, the page should automatically reload if using **live-server**. Otherwise, you can manually refresh the page.
 
 ## Hosting on GitHub Pages
 
