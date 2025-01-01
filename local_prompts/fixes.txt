@@ -1,0 +1,380 @@
+fixes.txt
+
+---
+
+
+when I call the oncology category API with a specific ontology such as HN, I want the API to return not only the HN node but all the downstream nodes that emanate from this node, including their children and so on until the last nodes are returned. 
+
+Instead when I called the category only that ontology was returned, e.g. when I called /ontology_category/HN, you only returned the HN node and the edges coming from it. fix this
+
+{
+	"edges": [
+		{
+			"arrow": true,
+			"source": "HN",
+			"target": "Interventional"
+		},
+		{
+			"arrow": true,
+			"source": "HN",
+			"target": "Non-Interventional"
+		}
+	],
+	"nodes": [
+		{
+			"color": "darkgrey",
+			"id": "HN",
+			"outline": "black",
+			"type": "oncology_category"
+		}
+	]
+}
+
+
+
+-------
+
+I see you're doing this:
+
+	{
+			"arrow": true,
+			"source": "Neoadjuvant Trials",
+			"target": NaN
+		},
+	
+
+I do not want you to be using NaN for either source or target.
+In cases where you do not see any more descendents in the csv that is the end of the branch. there are no more edges coming out of it. For example, when you see something like this in the csv:
+
+HN,Interventional,Neoadjuvant Trials,,
+
+it means "Neoadjuvant Trials" is the end node in the branch.
+
+When you see this:
+HN,Interventional,Metastatic Trials,Line1,GS-1811
+
+it means GS-1811 is the end node. Fix the csv to json code.
+
+
+
+----
+
+When you're converting the csv to json, I want you to make each branch node unique to avoid name collision of similar other nodes in other branches. for example:
+
+you will see things like this in csv:
+HN,Interventional,Adjuvant Trials,,
+
+
+in JSON the downstream id and label attributes of these nodes are represented as:
+
+id: Interventional_HN, label: Interventional
+id: Adjuvant Trials_HN, label Adjuvant Trials
+
+
+
+
+Here's another example:
+
+in csv you see:
+
+GI,Non-Interventional,Postop/Adjuvant,Line1,Oracle (Cohorts 5/6/7/12)
+
+the downstream node ids and labels are are:
+
+id: Non-Interventional_GI, label: Non-Interventional
+id: Postop/Adjuvant_GI, label: Non-Interventional
+id: Line1_GI, label: Line1
+id and label: Oracle (Cohorts 5/6/7/12)  <-- note the ID for the trial_code are NOT unique as trial codes can be descendents of multiple upstream nodes.
+
+
+
+
+by keeping the IDs unique, we can ensure there are name space collisions of same named items across multiple branches. only the trial_codes can be shared descendents, nothing else.
+
+
+----
+
+
+when I hit render graph, the screen looks to go into an endless loop and the top panel slowly keeps expanding while staying blank.
+
+is is the data that is coming back from the backend api. 
+{
+	"directed": true,
+	"graph": {},
+	"links": [
+		{
+			"arrow": true,
+			"source": "Non-Interventional_HN",
+			"target": "Postop/Adjuvant_HN"
+		},
+		{
+			"arrow": true,
+			"source": "Non-Interventional_HN",
+			"target": "Metastatic Trials_HN"
+		},
+		{
+			"arrow": true,
+			"source": "Metastatic Trials_HN",
+			"target": "Line1_HN"
+		},
+		{
+			"arrow": true,
+			"source": "Metastatic Trials_HN",
+			"target": "Line2_HN"
+		},
+		{
+			"arrow": true,
+			"source": "Metastatic Trials_HN",
+			"target": "Line3+_HN"
+		},
+		{
+			"arrow": true,
+			"source": "Line2_HN",
+			"target": "SGNDV-005 (Cohort 1)"
+		},
+		{
+			"arrow": true,
+			"source": "Line2_HN",
+			"target": "ABBV-CLS-484"
+		},
+		{
+			"arrow": true,
+			"source": "Interventional_HN",
+			"target": "Neoadjuvant Trials_HN"
+		},
+		{
+			"arrow": true,
+			"source": "Interventional_HN",
+			"target": "Adjuvant Trials_HN"
+		},
+		{
+			"arrow": true,
+			"source": "Interventional_HN",
+			"target": "Metastatic Trials_HN"
+		},
+		{
+			"arrow": true,
+			"source": "Line3+_HN",
+			"target": "ABBV-CLS-484"
+		},
+		{
+			"arrow": true,
+			"source": "Line1_HN",
+			"target": "GS-1811"
+		},
+		{
+			"arrow": true,
+			"source": "HN",
+			"target": "Interventional_HN"
+		},
+		{
+			"arrow": true,
+			"source": "HN",
+			"target": "Non-Interventional_HN"
+		}
+	],
+	"multigraph": false,
+	"nodes": [
+		{
+			"color": "tanbrown",
+			"id": "Non-Interventional_HN",
+			"label": "Non-Interventional",
+			"outline": "black",
+			"type": "study_type"
+		},
+		{
+			"color": "lightred",
+			"description": "Trial Description",
+			"hyperlink": "https://google.com",
+			"id": "GS-1811",
+			"label": "GS-1811",
+			"outline": "black",
+			"type": "trial_code"
+		},
+		{
+			"color": "lightblue",
+			"id": "Metastatic Trials_HN",
+			"label": "Metastatic Trials",
+			"outline": "black",
+			"type": "trial_phase"
+		},
+		{
+			"color": "purple",
+			"id": "Line2_HN",
+			"label": "Line2",
+			"outline": "black",
+			"type": "therapy_line"
+		},
+		{
+			"color": "lightbrown",
+			"id": "Interventional_HN",
+			"label": "Interventional",
+			"outline": "black",
+			"type": "study_type"
+		},
+		{
+			"color": "lightblue",
+			"id": "Neoadjuvant Trials_HN",
+			"label": "Neoadjuvant Trials",
+			"outline": "black",
+			"type": "trial_phase"
+		},
+		{
+			"color": "purple",
+			"id": "Line3+_HN",
+			"label": "Line3+",
+			"outline": "black",
+			"type": "therapy_line"
+		},
+		{
+			"color": "purple",
+			"id": "Line1_HN",
+			"label": "Line1",
+			"outline": "black",
+			"type": "therapy_line"
+		},
+		{
+			"color": "lightblue",
+			"id": "Adjuvant Trials_HN",
+			"label": "Adjuvant Trials",
+			"outline": "black",
+			"type": "trial_phase"
+		},
+		{
+			"color": "lightred",
+			"description": "Trial Description",
+			"hyperlink": "https://google.com",
+			"id": "SGNDV-005 (Cohort 1)",
+			"label": "SGNDV-005 (Cohort 1)",
+			"outline": "black",
+			"type": "trial_code"
+		},
+		{
+			"color": "lightred",
+			"description": "Trial Description",
+			"hyperlink": "https://google.com",
+			"id": "ABBV-CLS-484",
+			"label": "ABBV-CLS-484",
+			"outline": "black",
+			"type": "trial_code"
+		},
+		{
+			"color": "lightblue",
+			"id": "Postop/Adjuvant_HN",
+			"label": "Postop/Adjuvant",
+			"outline": "black",
+			"type": "trial_phase"
+		},
+		{
+			"color": "darkgrey",
+			"id": "HN",
+			"label": "HN",
+			"outline": "black",
+			"type": "oncology_category"
+		}
+	]
+}
+
+
+
+I noticed that you're importing this data into the cy const like so:
+
+   const cy = cytoscape({
+      container: cyContainer,
+      elements: data.elements,
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'shape': 'round-rectangle',
+            'background-color': 'data(color)',
+            'border-color': 'data(outline)',
+            'label': 'data(label)',
+            'text-valign': 'center',
+            'width': 'label',
+            'padding': '10px',
+            'font-size': '12px',
+          }
+        },
+        {
+          selector: 'edge',
+  
+
+
+are you sure the returned data is in the format that is amenable for the cytoscape code you wrote? if not, I want you to fix most (if not all) of the code in the backend so that the front end remains as simple as possible.
+
+
+
+-------
+
+after clicking on render graph nothing appears in the top panel. i see, after a few seconds the following pop up in the JS console:
+
+Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+
+Additionally here are all the logs I see in the bottom console:
+
+API Response Data: { "directed": true, "graph": {}, "links": [ { "arrow": true, "source": "HN", "target": "Interventional_HN" }, { "arrow": true, "source": "HN", "target": "Non-Interventional_HN" }, { "arrow": true, "source": "Interventional_HN", "target": "Neoadjuvant Trials_HN" }, { "arrow": true, "source": "Interventional_HN", "target": "Adjuvant Trials_HN" }, { "arrow": true, "source": "Interventional_HN", "target": "Metastatic Trials_HN" }, { "arrow": true, "source": "Metastatic Trials_HN", "target": "Line1_HN" }, { "arrow": true, "source": "Metastatic Trials_HN", "target": "Line2_HN" }, { "arrow": true, "source": "Metastatic Trials_HN", "target": "Line3+_HN" }, { "arrow": true, "source": "Line1_HN", "target": "GS-1811" }, { "arrow": true, "source": "Line2_HN", "target": "SGNDV-005 (Cohort 1)" }, { "arrow": true, "source": "Line2_HN", "target": "ABBV-CLS-484" }, { "arrow": true, "source": "Line3+_HN", "target": "ABBV-CLS-484" }, { "arrow": true, "source": "Non-Interventional_HN", "target": "Postop/Adjuvant_HN" }, { "arrow": true, "source": "Non-Interventional_HN", "target": "Metastatic Trials_HN" }, { "arrow": true, "source": "Breast", "target": "Interventional_Breast" }, { "arrow": true, "source": "Breast", "target": "Non-Interventional_Breast" }, { "arrow": true, "source": "Interventional_Breast", "target": "Neoadjuvant Trials_Breast" }, { "arrow": true, "source": "Interventional_Breast", "target": "Adjuvant Trials_Breast" }, { "arrow": true, "source": "Interventional_Breast", "target": "Metastatic Trials_Breast" }, { "arrow": true, "source": "Metastatic Trials_Breast", "target": "Line1_Breast" }, { "arrow": true, "source": "Metastatic Trials_Breast", "target": "Line2_Breast" }, { "arrow": true, "source": "Metastatic Trials_Breast", "target": "Line3+_Breast" }, { "arrow": true, "source": "Line1_Breast", "target": "Oracle (Cohort 3)" }, { "arrow": true, "source": "Line1_Breast", "target": "SIBYL" }, { "arrow": true, "source": "Non-Interventional_Breast", "target": "Postop/Adjuvant_Breast" }, { "arrow": true, "source": "Non-Interventional_Breast", "target": "Metastatic Trials_Breast" }, { "arrow": true, "source": "Postop/Adjuvant_Breast", "target": "Line1_Breast" }, { "arrow": true, "source": "GI", "target": "Interventional_GI" }, { "arrow": true, "source": "GI", "target": "Non-Interventional_GI" }, { "arrow": true, "source": "Interventional_GI", "target": "Neoadjuvant Trials_GI" }, { "arrow": true, "source": "Interventional_GI", "target": "Adjuvant Trials_GI" }, { "arrow": true, "source": "Interventional_GI", "target": "Metastatic Trials_GI" }, { "arrow": true, "source": "Metastatic Trials_GI", "target": "Line1_GI" }, { "arrow": true, "source": "Metastatic Trials_GI", "target": "Line2_GI" }, { "arrow": true, "source": "Metastatic Trials_GI", "target": "Line3+_GI" }, { "arrow": true, "source": "Line1_GI", "target": "XL092-002 (Cohort 7)" }, { "arrow": true, "source": "Line1_GI", "target": "Oracle (Cohorts 5/6/7/12)" }, { "arrow": true, "source": "Line1_GI", "target": "SIBYL" }, { "arrow": true, "source": "Non-Interventional_GI", "target": "Postop/Adjuvant_GI" }, { "arrow": true, "source": "Non-Interventional_GI", "target": "Metastatic Trials_GI" }, { "arrow": true, "source": "Postop/Adjuvant_GI", "target": "Line1_GI" }, { "arrow": true, "source": "GU", "target": "Interventional_GU" }, { "arrow": true, "source": "GU", "target": "Non-Interventional_GU" }, { "arrow": true, "source": "Interventional_GU", "target": "Neoadjuvant Trials_GU" }, { "arrow": true, "source": "Interventional_GU", "target": "Adjuvant Trials_GU" }, { "arrow": true, "source": "Interventional_GU", "target": "Metastatic Trials_GU" }, { "arrow": true, "source": "Metastatic Trials_GU", "target": "Line1_GU" }, { "arrow": true, "source": "Metastatic Trials_GU", "target": "Line2_GU" }, { "arrow": true, "source": "Metastatic Trials_GU", "target": "Line3+_GU" }, { "arrow": true, "source": "Line1_GU", "target": "XL092-002 (Cohort 6)" }, { "arrow": true, "source": "Line1_GU", "target": "Oracle (Cohorts 1/11)" }, { "arrow": true, "source": "Non-Interventional_GU", "target": "Postop/Adjuvant_GU" }, { "arrow": true, "source": "Non-Interventional_GU", "target": "Metastatic Trials_GU" }, { "arrow": true, "source": "Postop/Adjuvant_GU", "target": "Line1_GU" }, { "arrow": true, "source": "Gyn/Onc", "target": "Interventional_Gyn/Onc" }, { "arrow": true, "source": "Gyn/Onc", "target": "Non-Interventional_Gyn/Onc" }, { "arrow": true, "source": "Interventional_Gyn/Onc", "target": "Neoadjuvant Trials_Gyn/Onc" }, { "arrow": true, "source": "Interventional_Gyn/Onc", "target": "Adjuvant Trials_Gyn/Onc" }, { "arrow": true, "source": "Interventional_Gyn/Onc", "target": "Metastatic Trials_Gyn/Onc" }, { "arrow": true, "source": "Metastatic Trials_Gyn/Onc", "target": "Line1_Gyn/Onc" }, { "arrow": true, "source": "Metastatic Trials_Gyn/Onc", "target": "Line2_Gyn/Onc" }, { "arrow": true, "source": "Metastatic Trials_Gyn/Onc", "target": "Line3+_Gyn/Onc" }, { "arrow": true, "source": "Line1_Gyn/Onc", "target": "Oracle (Cohorts 9/10)" }, { "arrow": true, "source": "Line3+_Gyn/Onc", "target": "GS-1811" }, { "arrow": true, "source": "Non-Interventional_Gyn/Onc", "target": "Postop/Adjuvant_Gyn/Onc" }, { "arrow": true, "source": "Non-Interventional_Gyn/Onc", "target": "Metastatic Trials_Gyn/Onc" }, { "arrow": true, "source": "Postop/Adjuvant_Gyn/Onc", "target": "Line1_Gyn/Onc" }, { "arrow": true, "source": "Lung/Thoracic", "target": "Interventional_Lung/Thoracic" }, { "arrow": true, "source": "Lung/Thoracic", "target": "Non-Interventional_Lung/Thoracic" }, { "arrow": true, "source": "Interventional_Lung/Thoracic", "target": "Neoadjuvant Trials_Lung/Thoracic" }, { "arrow": true, "source": "Interventional_Lung/Thoracic", "target": "Adjuvant Trials_Lung/Thoracic" }, { "arrow": true, "source": "Interventional_Lung/Thoracic", "target": "Metastatic Trials_Lung/Thoracic" }, { "arrow": true, "source": "Metastatic Trials_Lung/Thoracic", "target": "Line1_Lung/Thoracic" }, { "arrow": true, "source": "Metastatic Trials_Lung/Thoracic", "target": "Line2_Lung/Thoracic" }, { "arrow": true, "source": "Metastatic Trials_Lung/Thoracic", "target": "Line3+_Lung/Thoracic" }, { "arrow": true, "source": "Line1_Lung/Thoracic", "target": "Oracle (Cohort 2)" }, { "arrow": true, "source": "Non-Interventional_Lung/Thoracic", "target": "Postop/Adjuvant_Lung/Thoracic" }, { "arrow": true, "source": "Non-Interventional_Lung/Thoracic", "target": "Metastatic Trials_Lung/Thoracic" }, { "arrow": true, "source": "Postop/Adjuvant_Lung/Thoracic", "target": "Line1_Lung/Thoracic" }, { "arrow": true, "source": "Melanoma/Cutaneous/Sarcoma", "target": "Interventional_Melanoma/Cutaneous/Sarcoma" }, { "arrow": true, "source": "Melanoma/Cutaneous/Sarcoma", "target": "Non-Interventional_Melanoma/Cutaneous/Sarcoma" }, { "arrow": true, "source": "Interventional_Melanoma/Cutaneous/Sarcoma", "target": "Neoadjuvant Trials_Melanoma/Cutaneous/Sarcoma" }, { "arrow": true, "source": "Interventional_Melanoma/Cutaneous/Sarcoma", "target": "Adjuvant Trials_Melanoma/Cutaneous/Sarcoma" }, { "arrow": true, "source": "Interventional_Melanoma/Cutaneous/Sarcoma", "target": "Metastatic Trials_Melanoma/Cutaneous/Sarcoma" }, { "arrow": true, "source": "Metastatic Trials_Melanoma/Cutaneous/Sarcoma", "target": "Line1_Melanoma/Cutaneous/Sarcoma" }, { "arrow": true, "source": "Metastatic Trials_Melanoma/Cutaneous/Sarcoma", "target": "Line2_Melanoma/Cutaneous/Sarcoma" }, { "arrow": true, "source": "Metastatic Trials_Melanoma/Cutaneous/Sarcoma", "target": "Line3+_Melanoma/Cutaneous/Sarcoma" }, { "arrow": true, "source": "Non-Interventional_Melanoma/Cutaneous/Sarcoma", "target": "Postop/Adjuvant_Melanoma/Cutaneous/Sarcoma" }, { "arrow": true, "source": "Non-Interventional_Melanoma/Cutaneous/Sarcoma", "target": "Metastatic Trials_Melanoma/Cutaneous/Sarcoma" }, { "arrow": true, "source": "Rad/Onc", "target": "Interventional_Rad/Onc" }, { "arrow": true, "source": "Rad/Onc", "target": "Non-Interventional_Rad/Onc" }, { "arrow": true, "source": "Interventional_Rad/Onc", "target": "Neoadjuvant Trials_Rad/Onc" }, { "arrow": true, "source": "Interventional_Rad/Onc", "target": "Adjuvant Trials_Rad/Onc" }, { "arrow": true, "source": "Interventional_Rad/Onc", "target": "Metastatic Trials_Rad/Onc" }, { "arrow": true, "source": "Metastatic Trials_Rad/Onc", "target": "Line1_Rad/Onc" }, { "arrow": true, "source": "Metastatic Trials_Rad/Onc", "target": "Line2_Rad/Onc" }, { "arrow": true, "source": "Metastatic Trials_Rad/Onc", "target": "Line3+_Rad/Onc" }, { "arrow": true, "source": "Non-Interventional_Rad/Onc", "target": "Postop/Adjuvant_Rad/Onc" }, { "arrow": true, "source": "Non-Interventional_Rad/Onc", "target": "Metastatic Trials_Rad/Onc" }, { "arrow": true, "source": "Tumor Agnostic", "target": "Interventional_Tumor Agnostic" }, { "arrow": true, "source": "Tumor Agnostic", "target": "Non-Interventional_Tumor Agnostic" }, { "arrow": true, "source": "Interventional_Tumor Agnostic", "target": "Non-Metastatic_Tumor Agnostic" }, { "arrow": true, "source": "Interventional_Tumor Agnostic", "target": "Metastatic_Tumor Agnostic" }, { "arrow": true, "source": "Interventional_Tumor Agnostic", "target": "Other_Tumor Agnostic" }, { "arrow": true, "source": "Metastatic_Tumor Agnostic", "target": "Line1_Tumor Agnostic" }, { "arrow": true, "source": "Line1_Tumor Agnostic", "target": "NCI AIM NIVO" }, { "arrow": true, "source": "Line1_Tumor Agnostic", "target": "LOXO-Libretto-001" }, { "arrow": true, "source": "Line1_Tumor Agnostic", "target": "SWOG 2012" }, { "arrow": true, "source": "Line1_Tumor Agnostic", "target": "Atrium" }, { "arrow": true, "source": "Other_Tumor Agnostic", "target": "Line1_Tumor Agnostic" }, { "arrow": true, "source": "Non-Interventional_Tumor Agnostic", "target": "Postop/Adjuvant_Tumor Agnostic" }, { "arrow": true, "source": "Non-Interventional_Tumor Agnostic", "target": "Metastatic Trials_Tumor Agnostic" } ], "multigraph": false, "nodes": [ { "color": "darkgrey", "id": "HN", "label": "HN", "outline": "black", "type": "oncology_category" }, { "color": "lightbrown", "id": "Interventional_HN", "label": "Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Neoadjuvant Trials_HN", "label": "Neoadjuvant Trials", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Adjuvant Trials_HN", "label": "Adjuvant Trials", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Metastatic Trials_HN", "label": "Metastatic Trials", "outline": "black", "type": "trial_phase" }, { "color": "purple", "id": "Line1_HN", "label": "Line1", "outline": "black", "type": "therapy_line" }, { "color": "lightred", "description": "Trial Description", "hyperlink": "https://google.com", "id": "GS-1811", "label": "GS-1811", "outline": "black", "type": "trial_code" }, { "color": "purple", "id": "Line2_HN", "label": "Line2", "outline": "black", "type": "therapy_line" }, { "color": "lightred", "description": "Trial Description", "hyperlink": "https://google.com", "id": "SGNDV-005 (Cohort 1)", "label": "SGNDV-005 (Cohort 1)", "outline": "black", "type": "trial_code" }, { "color": "lightred", "description": "Trial Description", "hyperlink": "https://google.com", "id": "ABBV-CLS-484", "label": "ABBV-CLS-484", "outline": "black", "type": "trial_code" }, { "color": "purple", "id": "Line3+_HN", "label": "Line3+", "outline": "black", "type": "therapy_line" }, { "color": "tanbrown", "id": "Non-Interventional_HN", "label": "Non-Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Postop/Adjuvant_HN", "label": "Postop/Adjuvant", "outline": "black", "type": "trial_phase" }, { "color": "darkgrey", "id": "Breast", "label": "Breast", "outline": "black", "type": "oncology_category" }, { "color": "lightbrown", "id": "Interventional_Breast", "label": "Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Neoadjuvant Trials_Breast", "label": "Neoadjuvant Trials", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Adjuvant Trials_Breast", "label": "Adjuvant Trials", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Metastatic Trials_Breast", "label": "Metastatic Trials", "outline": "black", "type": "trial_phase" }, { "color": "purple", "id": "Line1_Breast", "label": "Line1", "outline": "black", "type": "therapy_line" }, { "color": "purple", "id": "Line2_Breast", "label": "Line2", "outline": "black", "type": "therapy_line" }, { "color": "purple", "id": "Line3+_Breast", "label": "Line3+", "outline": "black", "type": "therapy_line" }, { "color": "tanbrown", "id": "Non-Interventional_Breast", "label": "Non-Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Postop/Adjuvant_Breast", "label": "Postop/Adjuvant", "outline": "black", "type": "trial_phase" }, { "color": "lightred", "description": "Trial Description", "hyperlink": "https://google.com", "id": "Oracle (Cohort 3)", "label": "Oracle (Cohort 3)", "outline": "black", "type": "trial_code" }, { "color": "lightred", "description": "Trial Description", "hyperlink": "https://google.com", "id": "SIBYL", "label": "SIBYL", "outline": "black", "type": "trial_code" }, { "color": "darkgrey", "id": "GI", "label": "GI", "outline": "black", "type": "oncology_category" }, { "color": "lightbrown", "id": "Interventional_GI", "label": "Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Neoadjuvant Trials_GI", "label": "Neoadjuvant Trials", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Adjuvant Trials_GI", "label": "Adjuvant Trials", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Metastatic Trials_GI", "label": "Metastatic Trials", "outline": "black", "type": "trial_phase" }, { "color": "purple", "id": "Line1_GI", "label": "Line1", "outline": "black", "type": "therapy_line" }, { "color": "lightred", "description": "Trial Description", "hyperlink": "https://google.com", "id": "XL092-002 (Cohort 7)", "label": "XL092-002 (Cohort 7)", "outline": "black", "type": "trial_code" }, { "color": "purple", "id": "Line2_GI", "label": "Line2", "outline": "black", "type": "therapy_line" }, { "color": "purple", "id": "Line3+_GI", "label": "Line3+", "outline": "black", "type": "therapy_line" }, { "color": "tanbrown", "id": "Non-Interventional_GI", "label": "Non-Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Postop/Adjuvant_GI", "label": "Postop/Adjuvant", "outline": "black", "type": "trial_phase" }, { "color": "lightred", "description": "Trial Description", "hyperlink": "https://google.com", "id": "Oracle (Cohorts 5/6/7/12)", "label": "Oracle (Cohorts 5/6/7/12)", "outline": "black", "type": "trial_code" }, { "color": "darkgrey", "id": "GU", "label": "GU", "outline": "black", "type": "oncology_category" }, { "color": "lightbrown", "id": "Interventional_GU", "label": "Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Neoadjuvant Trials_GU", "label": "Neoadjuvant Trials", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Adjuvant Trials_GU", "label": "Adjuvant Trials", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Metastatic Trials_GU", "label": "Metastatic Trials", "outline": "black", "type": "trial_phase" }, { "color": "purple", "id": "Line1_GU", "label": "Line1", "outline": "black", "type": "therapy_line" }, { "color": "lightred", "description": "Trial Description", "hyperlink": "https://google.com", "id": "XL092-002 (Cohort 6)", "label": "XL092-002 (Cohort 6)", "outline": "black", "type": "trial_code" }, { "color": "purple", "id": "Line2_GU", "label": "Line2", "outline": "black", "type": "therapy_line" }, { "color": "purple", "id": "Line3+_GU", "label": "Line3+", "outline": "black", "type": "therapy_line" }, { "color": "tanbrown", "id": "Non-Interventional_GU", "label": "Non-Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Postop/Adjuvant_GU", "label": "Postop/Adjuvant", "outline": "black", "type": "trial_phase" }, { "color": "lightred", "description": "Trial Description", "hyperlink": "https://google.com", "id": "Oracle (Cohorts 1/11)", "label": "Oracle (Cohorts 1/11)", "outline": "black", "type": "trial_code" }, { "color": "darkgrey", "id": "Gyn/Onc", "label": "Gyn/Onc", "outline": "black", "type": "oncology_category" }, { "color": "lightbrown", "id": "Interventional_Gyn/Onc", "label": "Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Neoadjuvant Trials_Gyn/Onc", "label": "Neoadjuvant Trials", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Adjuvant Trials_Gyn/Onc", "label": "Adjuvant Trials", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Metastatic Trials_Gyn/Onc", "label": "Metastatic Trials", "outline": "black", "type": "trial_phase" }, { "color": "purple", "id": "Line1_Gyn/Onc", "label": "Line1", "outline": "black", "type": "therapy_line" }, { "color": "purple", "id": "Line2_Gyn/Onc", "label": "Line2", "outline": "black", "type": "therapy_line" }, { "color": "purple", "id": "Line3+_Gyn/Onc", "label": "Line3+", "outline": "black", "type": "therapy_line" }, { "color": "tanbrown", "id": "Non-Interventional_Gyn/Onc", "label": "Non-Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Postop/Adjuvant_Gyn/Onc", "label": "Postop/Adjuvant", "outline": "black", "type": "trial_phase" }, { "color": "lightred", "description": "Trial Description", "hyperlink": "https://google.com", "id": "Oracle (Cohorts 9/10)", "label": "Oracle (Cohorts 9/10)", "outline": "black", "type": "trial_code" }, { "color": "darkgrey", "id": "Lung/Thoracic", "label": "Lung/Thoracic", "outline": "black", "type": "oncology_category" }, { "color": "lightbrown", "id": "Interventional_Lung/Thoracic", "label": "Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Neoadjuvant Trials_Lung/Thoracic", "label": "Neoadjuvant Trials", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Adjuvant Trials_Lung/Thoracic", "label": "Adjuvant Trials", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Metastatic Trials_Lung/Thoracic", "label": "Metastatic Trials", "outline": "black", "type": "trial_phase" }, { "color": "purple", "id": "Line1_Lung/Thoracic", "label": "Line1", "outline": "black", "type": "therapy_line" }, { "color": "purple", "id": "Line2_Lung/Thoracic", "label": "Line2", "outline": "black", "type": "therapy_line" }, { "color": "purple", "id": "Line3+_Lung/Thoracic", "label": "Line3+", "outline": "black", "type": "therapy_line" }, { "color": "tanbrown", "id": "Non-Interventional_Lung/Thoracic", "label": "Non-Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Postop/Adjuvant_Lung/Thoracic", "label": "Postop/Adjuvant", "outline": "black", "type": "trial_phase" }, { "color": "lightred", "description": "Trial Description", "hyperlink": "https://google.com", "id": "Oracle (Cohort 2)", "label": "Oracle (Cohort 2)", "outline": "black", "type": "trial_code" }, { "color": "darkgrey", "id": "Melanoma/Cutaneous/Sarcoma", "label": "Melanoma/Cutaneous/Sarcoma", "outline": "black", "type": "oncology_category" }, { "color": "lightbrown", "id": "Interventional_Melanoma/Cutaneous/Sarcoma", "label": "Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Neoadjuvant Trials_Melanoma/Cutaneous/Sarcoma", "label": "Neoadjuvant Trials", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Adjuvant Trials_Melanoma/Cutaneous/Sarcoma", "label": "Adjuvant Trials", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Metastatic Trials_Melanoma/Cutaneous/Sarcoma", "label": "Metastatic Trials", "outline": "black", "type": "trial_phase" }, { "color": "purple", "id": "Line1_Melanoma/Cutaneous/Sarcoma", "label": "Line1", "outline": "black", "type": "therapy_line" }, { "color": "purple", "id": "Line2_Melanoma/Cutaneous/Sarcoma", "label": "Line2", "outline": "black", "type": "therapy_line" }, { "color": "purple", "id": "Line3+_Melanoma/Cutaneous/Sarcoma", "label": "Line3+", "outline": "black", "type": "therapy_line" }, { "color": "tanbrown", "id": "Non-Interventional_Melanoma/Cutaneous/Sarcoma", "label": "Non-Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Postop/Adjuvant_Melanoma/Cutaneous/Sarcoma", "label": "Postop/Adjuvant", "outline": "black", "type": "trial_phase" }, { "color": "darkgrey", "id": "Rad/Onc", "label": "Rad/Onc", "outline": "black", "type": "oncology_category" }, { "color": "lightbrown", "id": "Interventional_Rad/Onc", "label": "Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Neoadjuvant Trials_Rad/Onc", "label": "Neoadjuvant Trials", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Adjuvant Trials_Rad/Onc", "label": "Adjuvant Trials", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Metastatic Trials_Rad/Onc", "label": "Metastatic Trials", "outline": "black", "type": "trial_phase" }, { "color": "purple", "id": "Line1_Rad/Onc", "label": "Line1", "outline": "black", "type": "therapy_line" }, { "color": "purple", "id": "Line2_Rad/Onc", "label": "Line2", "outline": "black", "type": "therapy_line" }, { "color": "purple", "id": "Line3+_Rad/Onc", "label": "Line3+", "outline": "black", "type": "therapy_line" }, { "color": "tanbrown", "id": "Non-Interventional_Rad/Onc", "label": "Non-Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Postop/Adjuvant_Rad/Onc", "label": "Postop/Adjuvant", "outline": "black", "type": "trial_phase" }, { "color": "darkgrey", "id": "Tumor Agnostic", "label": "Tumor Agnostic", "outline": "black", "type": "oncology_category" }, { "color": "lightbrown", "id": "Interventional_Tumor Agnostic", "label": "Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Non-Metastatic_Tumor Agnostic", "label": "Non-Metastatic", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Metastatic_Tumor Agnostic", "label": "Metastatic", "outline": "black", "type": "trial_phase" }, { "color": "purple", "id": "Line1_Tumor Agnostic", "label": "Line1", "outline": "black", "type": "therapy_line" }, { "color": "lightred", "description": "Trial Description", "hyperlink": "https://google.com", "id": "NCI AIM NIVO", "label": "NCI AIM NIVO", "outline": "black", "type": "trial_code" }, { "color": "lightred", "description": "Trial Description", "hyperlink": "https://google.com", "id": "LOXO-Libretto-001", "label": "LOXO-Libretto-001", "outline": "black", "type": "trial_code" }, { "color": "lightblue", "id": "Other_Tumor Agnostic", "label": "Other", "outline": "black", "type": "trial_phase" }, { "color": "lightred", "description": "Trial Description", "hyperlink": "https://google.com", "id": "SWOG 2012", "label": "SWOG 2012", "outline": "black", "type": "trial_code" }, { "color": "lightred", "description": "Trial Description", "hyperlink": "https://google.com", "id": "Atrium", "label": "Atrium", "outline": "black", "type": "trial_code" }, { "color": "tanbrown", "id": "Non-Interventional_Tumor Agnostic", "label": "Non-Interventional", "outline": "black", "type": "study_type" }, { "color": "lightblue", "id": "Postop/Adjuvant_Tumor Agnostic", "label": "Postop/Adjuvant", "outline": "black", "type": "trial_phase" }, { "color": "lightblue", "id": "Metastatic Trials_Tumor Agnostic", "label": "Metastatic Trials", "outline": "black", "type": "trial_phase" } ] }
+Error: Invalid data received.
+Rendered graph for category: All
+
+--
+
+
+secondarily, i caught another defect: only All is returning data with 200, the other calls are retruning 500 error. here are logs from the back end server:
+
+127.0.0.1 - - [31/Dec/2024 18:26:09] "GET /oncology_category/All HTTP/1.1" 200 -
+127.0.0.1 - - [31/Dec/2024 18:26:45] "GET /oncology_category/Breast HTTP/1.1" 500 -
+127.0.0.1 - - [31/Dec/2024 18:27:02] "GET /oncology_category/GI HTTP/1.1" 500 -
+127.0.0.1 - - [31/Dec/2024 18:27:04] "GET /oncology_category/GU HTTP/1.1" 500 -
+127.0.0.1 - - [31/Dec/2024 18:27:06] "GET /oncology_category/Gyn_Onc HTTP/1.1" 500 -
+127.0.0.1 - - [31/Dec/2024 18:27:08] "GET /oncology_category/HN HTTP/1.1" 500 -
+127.0.0.1 - - [31/Dec/2024 18:27:10] "GET /oncology_category/Lung_Thoracic HTTP/1.1" 500 -
+127.0.0.1 - - [31/Dec/2024 18:27:12] "GET /oncology_category/Melanoma_Cutaneous_Sarcoma HTTP/1.1" 500 -
+127.0.0.1 - - [31/Dec/2024 18:27:17] "GET /oncology_category/Rad_Onc HTTP/1.1" 500 -
+127.0.0.1 - - [31/Dec/2024 18:27:19] "GET /oncology_category/Tumor_Agnostic HTTP/1.1" 500 -
+
+
+
+thirdly, please allow me to drag and increase the size of the bottom panel , so I can see all the logs on the screen instead of scrolling in the tiny panel.
+
+-----
+
+
+for the  Render Graph for All,  I see in console : "Elements received: undefined"  
+
+in the bottom panel, I see full data in API Response Data, but I also see Error: Invalid data received.
+
+in the API response json data I no longer see the elements , so I can see why data.elements is not printing in the JS console. 
+
+Looking at the code:
+
+  const renderGraph = (data) => {
+    console.log('Elements received:', data.elements); // Debugging log
+    logMessage('API Response Data: ' + JSON.stringify(data, null, 2));
+
+    if (!data || !data.elements) {
+      logMessage('Error: Invalid data received.');
+      return;
+    }
+
+
+is it possible that when you use data up in the JSON.stringify(data, null, 2) that the variable goes away and then after that you do if (!data || !data.elements) you don't find data anymore and print the log message?
+
+
+
+
+finally, your update styles.css didnt fix anything, i cant adjust the size of the bottom panel still.
+
+------
+
+
+
+for all the trial_codes, I want to enable a right click to open a window in a new tab. I have the links already in their corresponding node data in the json. Use this code as inspiration:
+
+        // Add right-click behavior for nodes
+        cy.on('cxttap', 'node', function (e) {
+          const url = this.data('hyperlink');
+          if (url) {
+            window.open(url, '_blank');
+          }
+        });

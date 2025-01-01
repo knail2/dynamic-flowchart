@@ -1,0 +1,84 @@
+I want to refactor the code in the project files, so that I break it up into a front end and a back end.
+
+Frontend:
+
+- its a dynamic webpage based on the format in the index file.
+- the graph that cytoscape will print will be on the top panel, covering 90% of the screen.
+- in addition, create two aesthetically created buttons on the right side, which, when pressed, issue specific GET requests. I'll explain their functionality shortly
+- also, create a panel at the bottom, about 10% of the screen,  which prints the output that comes from GET responses. this should be in very small , grey font and is always there. the text is left-aligned. the title is "Logs:"
+- Button 1:
+	- name: "convert csv to json"
+	- action: when pressed, it makes a call to the backend on localhost:9999/csv-to-json, and prints the returned output in the bottom panel.
+	- it should not disrupt the top panel
+
+- Button 2: 
+	- above this button, there should be a dropdown on top of which is written Oncology Category, with the following options: Breast, GI, GU, Gyn_Onc, HN, Lung_Thoracic, Melanoma_Cutaneous_Sarcoma, Rad_Onc, Tumor_Agnostic and All
+		- All should be default for this dropdown.
+	- button name: "Render Graph"
+	- action: when button is pressed it takes the value selected in the drop down and created a GET request using it. For example, if Gyn_Onc is selected, it creates a GET request to: localhost:9999/oncology_category/Gyn_Onc and
+		1. prints the output in the bottom panel
+		2. passes the output to the cytoscape code in app.js to render the graph.
+			- the nodes are rounded rectangles
+			- the edges are directed and having pointing arrows to downstream nodes
+			- the nodes and edges use the attributes in the GET response for the object and outline color.
+			- the trial_code nodes should print the extra data in a tooltip.
+
+
+Backend:
+- Python / Flask based API
+- API listens on port 9999
+- no authentication for now
+- uses the python Networkx library (which will be referred to subsequently as nx)
+- stateful data stored in mpop-tidytable.csv (uploaded into this project) instead of a database.
+
+API calls in backend:
+- /csv-to-json:
+	- GET request
+	- converts the mpop-tidytable.csv into the json format supported by nx
+	- saves this in data/mpop-tidytable.json
+	- upon successful execution, returns the string "csv converted."
+	- upon a failed execution, returns the error in a string.
+	- the way to read the csv is as follows:
+	- it is a directed graph going left column to right most column
+		- oncology_category	is the starting node. it points to study_type which points to trial_phase which points to therapy_line which points to trial_code
+		- not all paths end with trial_code.
+		- some graphs
+	- it is not a multigraph , meaning there are not multiple links between the same two nodes.
+	- every edge needs to point to the other edge using an arrow, this should be stored in the edge custom attributes in the json.
+	- each node should have an attribute in the json which identifies its identity. e.g. oncology_category	study_type,	trial_phase,	therapy_line, or trial_code
+	- color and outline of the node should be captured as attributes for the node:
+		- the color names must be valid css colors.
+		- all oncology_category items are dark grey with black outline when selected, but light grey with black outline when unselected or during initial display. default display for oncology_category is visible, and that of all other nodes is hidden.
+		- all study_type items which are interventional are light brown with black outline.
+		- all study_type items which are non-interventional are tan brown with black outline
+		- all trial_phase items are shade of blue. Neoadjuvant Trials is light-blue, Adjuvant Trials a little darker than Neoadjuvant Trials , Metastatic Trials a little more darker than Adjuvant Trials
+		- all therapy_line items are shades of purple. Line1 is light purple, Line2 is darker thank Line1, Line3+ is a little more darker than Line2.
+		- all trial_code items should be light shade of red.
+		- All text font color should be specified explicitly as a node attribute. the text should be legible and the node color should not be so dark that the text is not readable. if you choose to use a dark color which in your judgment will make it harder to read the text, mark the font color for that node to light grey. 
+	- trial_code will special treatment in the js frontend (specifically how cytoscape will show it) and its attributes should capture the following details:
+		- it must have a description field
+		- it must have a hyperlink field, (for now, use https://google.com as a placeholder for all the values)
+
+
+- /oncology_category/<category_name>:
+	- this is GET request which parses the data/mpop-tidytable.json and returns a subset or all of the data in a cytoscape-compatible format.
+	- valid values for <category_name> are : Breast, GI, GU, Gyn_Onc, HN, Lung_Thoracic, Melanoma_Cutaneous_Sarcoma, Rad_Onc, Tumor_Agnostic and All
+	- for any invalid category_names return a graceful message (http 200) , and dont error out.
+	- for any valid category name, except all, just return the graph which starts from that category. do not return any of the other categories and their downstream nodes.
+	- note that some of the category names received have _ in them. the mapping of these to the file are:
+
+	Get_request = oncology_category in json file
+	Breast = Breast
+	GI = GI 
+	GU = GU, 
+	Gyn_Onc = Gyn/Onc, 
+	HN = HN, 
+	Lung_Thoracic = Lung/Thoracic , 
+	Melanoma_Cutaneous_Sarcoma = Melanoma/Cutaneous/Sarcoma, 
+	Rad_Onc = Rad/Onc, 
+	Tumor_Agnostic = Tumor Agnostic
+
+
+	- for "all", return the entire graph data
+	- the data this API will return will be directly used by cytoscape to render the graph on the page. Therefore, please ensure the returned data is compatible to cytoscape. 
+
