@@ -36,19 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
     logMessage(`Hiding node or edge: ${id}`);
   }
 
-  function toggleVisibility(id) {
-    if (isHidden(id)) {
-      show(id);
-    } else {
-      hide(id);
-    }
-  }
-
-  function setNodeColor(node, fill, outline) {
-    node.style('background-color', fill);
-    node.style('border-color', outline);
-  }
-
   const toggleDownstream = (nodeId) => {
     logMessage(`Toggling downstream nodes for: ${nodeId}`);
 
@@ -79,6 +66,73 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const filterByCategory = (data, category) => {
+    if (category === 'All (active trials)') {
+      const trialCodeNodes = new Set();
+      const lineageNodes = new Set();
+
+      // Step 1: Collect trial_code nodes
+      logMessage("Step 1: Collecting trial_code nodes");
+      data.elements.nodes.forEach(node => {
+        if (node.data.type === 'trial_code') {
+          trialCodeNodes.add(node.data.id);
+          lineageNodes.add(node.data.id);
+          logMessage(`Trial Code Node Added: ${node.data.id}`);
+        }
+      });
+
+      // Step 2: Include all direct predecessors of trial_code nodes
+      logMessage("Step 2: Including direct predecessors");
+      data.elements.edges.forEach(edge => {
+        if (trialCodeNodes.has(edge.data.target)) {
+          lineageNodes.add(edge.data.source);
+          logMessage(`Predecessor Node Added: ${edge.data.source}`);
+        }
+      });
+
+      // Step 3: Include all ancestor nodes in the hierarchy
+      logMessage("Step 3: Including all ancestors in the hierarchy");
+      data.elements.edges.forEach(edge => {
+        if (lineageNodes.has(edge.data.target)) {
+          lineageNodes.add(edge.data.source);
+          logMessage(`Ancestor Node Added: ${edge.data.source}`);
+        }
+      });
+
+      // Step 4: Explicitly include oncology_category and study_type nodes
+      logMessage("Step 4: Including oncology_category and study_type nodes");
+      data.elements.nodes.forEach(node => {
+        if (
+          node.data.type === 'oncology_category' ||
+          node.data.type === 'study_type'
+        ) {
+          lineageNodes.add(node.data.id);
+          logMessage(`Node Explicitly Added: ${node.data.id} (${node.data.type})`);
+        }
+      });
+
+      // Step 5: Filter nodes
+      logMessage("Step 5: Filtering nodes");
+      data.elements.nodes.forEach(node => {
+        if (lineageNodes.has(node.data.id)) {
+          delete node.classes;
+        } else {
+          node.classes = 'hidden';
+        }
+      });
+
+      // Step 6: Filter edges
+      logMessage("Step 6: Filtering edges");
+      data.elements.edges.forEach(edge => {
+        if (lineageNodes.has(edge.data.source) && lineageNodes.has(edge.data.target)) {
+          delete edge.classes;
+        } else {
+          edge.classes = 'hidden';
+        }
+      });
+
+      return data;
+    }
+
     if (category === 'All') {
       // Show only oncology_category nodes for "All"
       data.elements.nodes.forEach(node => {
