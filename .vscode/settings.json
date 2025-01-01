@@ -16,5 +16,10 @@
         "**/.settings": true,
         "**/.exchange_modules_tmp": true,
         ".mule": true
-    }
+    },
+	"liveServer.settings.logLevel": 2,
+  	"liveServer.settings.ignoreFiles": [
+    		"**/data/*",
+    		"**/backend/*"
+  ]
 }

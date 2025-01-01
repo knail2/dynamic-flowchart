@@ -18,8 +18,8 @@ LOGS_DIR = os.path.join(os.getcwd(), 'backend/logs')
 os.makedirs(LOGS_DIR, exist_ok=True)
 
 # Configuration flags
-logging_enabled = False
-debug_enabled = False
+logging_enabled = True
+debug_enabled = True
 
 # Valid CSS colors
 COLOR_MAP = {
@@ -48,7 +48,15 @@ def debug_log(message):
 # Helper function to convert CSV to Cytoscape-compatible JSON format
 def csv_to_cytoscape_json():
     try:
+        debug_log(f"Attempting to read CSV file from: {CSV_FILE}")
+
+        if not os.path.exists(CSV_FILE):
+            debug_log("CSV file not found.")
+            return {"error": "CSV file not found."}
+
         df = pd.read_csv(CSV_FILE)
+        debug_log(f"CSV file read successfully. Columns: {list(df.columns)}")
+
         G = nx.DiGraph()
 
         # Build the graph from the CSV
@@ -63,11 +71,11 @@ def csv_to_cytoscape_json():
                 G.add_node(study_type_id, id=study_type_id, label=row['study_type'], type='study_type', color=color, outline='black', classes='hidden')
 
             if pd.notna(row['trial_phase']):
-                trial_phase_id = f"{row['trial_phase']}_{row['oncology_category']}"
+                trial_phase_id = f"{row['trial_phase']}_{row['study_type']}_{row['oncology_category']}"
                 G.add_node(trial_phase_id, id=trial_phase_id, label=row['trial_phase'], type='trial_phase', color=COLOR_MAP['lightblue'], outline='black', classes='hidden')
 
             if pd.notna(row['therapy_line']):
-                therapy_line_id = f"{row['therapy_line']}_{row['oncology_category']}"
+                therapy_line_id = f"{row['therapy_line']}_{row['trial_phase']}_{row['study_type']}_{row['oncology_category']}"
                 G.add_node(therapy_line_id, id=therapy_line_id, label=row['therapy_line'], type='therapy_line', color=COLOR_MAP['purple'], outline='black', classes='hidden')
 
             if pd.notna(row['trial_code']):
@@ -99,28 +107,42 @@ def csv_to_cytoscape_json():
             classes = attr.pop('classes', '')  # Remove 'classes' from data
             edges.append({"data": {"source": source, "target": target, **attr}, "classes": classes})
 
-        return {"elements": {"nodes": nodes, "edges": edges}}
+        json_output = {"elements": {"nodes": nodes, "edges": edges}}
+        debug_log(f"Generated JSON: {json.dumps(json_output, indent=2)}")
+
+        return json_output
 
     except Exception as e:
         debug_log(f"Error in csv_to_cytoscape_json: {e}")
-        return str(e)
+        return {"error": str(e)}
 
 @app.route('/csv-to-json', methods=['GET'])
 def convert_csv_to_json():
     try:
         data = csv_to_cytoscape_json()
+
+        if "error" in data:
+            debug_log("Error returned from csv_to_cytoscape_json.")
+            return jsonify(message=data["error"]), 500
+
+        debug_log(f"Writing JSON output to file: {JSON_FILE}")
         with open(JSON_FILE, 'w') as f:
             json.dump(data, f)
+
         log_response('csv-to-json', data)
         return jsonify(message="CSV converted to Cytoscape-compatible JSON."), 200
     except Exception as e:
         log_response('csv-to-json', {"error": str(e)})
+        debug_log(f"Exception in convert_csv_to_json: {e}")
         return jsonify(message=str(e)), 500
 
 @app.route('/oncology_category/<category_name>', methods=['GET'])
 def get_oncology_category(category_name):
     try:
+        debug_log(f"Fetching oncology category: {category_name}")
+
         if not os.path.exists(JSON_FILE):
+            debug_log("JSON file not found. Aborting.")
             error_response = {"message": "JSON file not found. Please convert CSV first."}
             log_response(f'oncology_category_{category_name}', error_response)
             return jsonify(error_response), 400
@@ -141,7 +163,6 @@ def get_oncology_category(category_name):
         else:
             category_name = category_name.replace('_', '/')
 
-        # Filter elements for the selected category
         filtered_nodes = set()
         filtered_edges = []
 
@@ -166,6 +187,7 @@ def get_oncology_category(category_name):
     except Exception as e:
         error_response = {"message": str(e)}
         log_response(f'oncology_category_{category_name}', error_response)
+        debug_log(f"Exception in get_oncology_category: {e}")
         return jsonify(error_response), 500
 
 if __name__ == '__main__':

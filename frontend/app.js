@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const logsContainer = document.getElementById('logs');
   const renderGraphBtn = document.getElementById('render-graph');
   const convertCsvBtn = document.getElementById('convert-csv');
+  const clearLogsBtn = document.getElementById('clear-logs'); // New button
   const categorySelect = document.getElementById('oncology-category');
 
   const BACKEND_URL = 'http://127.0.0.1:9999';
@@ -14,62 +15,32 @@ document.addEventListener('DOMContentLoaded', () => {
     logEntry.textContent = message;
     logsContainer.appendChild(logEntry);
     console.log(message);
+    logsContainer.scrollTop = logsContainer.scrollHeight; // Auto-scroll to the latest log
   };
 
-  function isHidden(id) {
-    return cy.getElementById(id).hasClass('hidden');
-  }
+  // Clear Logs Button
+  clearLogsBtn.addEventListener('click', () => {
+    logsContainer.innerHTML = '';
+    console.log('Logs cleared.'); // Optional debugging log
+  });
 
-  function show(id) {
-    cy.getElementById(id).removeClass('hidden');
-    logMessage(`Showing node or edge: ${id}`);
-  }
+  // Function to process CSV-to-JSON conversion
+  const convertCsvToJson = () => {
+    logMessage('Converting CSV to JSON with updated unique IDs...');
 
-  function hide(id) {
-    cy.getElementById(id).addClass('hidden');
-    logMessage(`Hiding node or edge: ${id}`);
-  }
-
-  function toggleVisibility(id) {
-    if (isHidden(id)) {
-      show(id);
-    } else {
-      hide(id);
-    }
-  }
-
-  function setNodeColor(node, fill, outline) {
-    node.style('background-color', fill);
-    node.style('border-color', outline);
-  }
-
-  const toggleDownstream = (nodeId) => {
-    logMessage(`Toggling downstream nodes for: ${nodeId}`);
-
-    const hideAllDescendants = (id) => {
-      const connectedEdges = cy.edges(`[source = "${id}"]`);
-      connectedEdges.forEach(edge => {
-        const targetNode = edge.target();
-        edge.addClass('hidden');
-        logMessage(`Hiding edge: ${edge.id()}`);
-        targetNode.addClass('hidden');
-        logMessage(`Hiding node: ${targetNode.id()}`);
-        hideAllDescendants(targetNode.id());
+    fetch(`${BACKEND_URL}/csv-to-json`)
+      .then((response) => {
+        logMessage(`Response status: ${response.status}`);
+        logMessage('CSV-to-JSON conversion completed.');
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .catch((err) => {
+        logMessage(`Error converting CSV: ${err.message}`);
+        console.error('Error details:', err);
       });
-    };
-
-    const connectedEdges = cy.edges(`[source = "${nodeId}"]`);
-    if (isHidden(connectedEdges[0]?.id())) {
-      connectedEdges.forEach(edge => {
-        const targetNode = edge.target();
-        edge.removeClass('hidden');
-        logMessage(`Showing edge: ${edge.id()}`);
-        targetNode.removeClass('hidden');
-        logMessage(`Showing node: ${targetNode.id()}`);
-      });
-    } else {
-      hideAllDescendants(nodeId);
-    }
   };
 
   const renderGraph = (data) => {
@@ -219,22 +190,5 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   });
 
-  convertCsvBtn.addEventListener('click', () => {
-    logMessage('Converting CSV to JSON...');
-    fetch(`${BACKEND_URL}/csv-to-json`)
-      .then((response) => {
-        logMessage(`Response status: ${response.status}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        logMessage(data.message);
-      })
-      .catch((err) => {
-        logMessage(`Error converting CSV: ${err.message}`);
-        console.error('Error details:', err);
-      });
-  });
+  convertCsvBtn.addEventListener('click', convertCsvToJson);
 });

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MPOP Clinical Trials - Dynamic Flowchart</title>
+  <title>STATIC MPOP Clinical Trials - Dynamic Flowchart</title>
 
   <!-- Styles -->
   <link rel="stylesheet" href="styles.css">
@@ -19,9 +19,9 @@
 <body>
   <div id="header">
     <img src="popcorn-logo.jpg" alt="MPOP Logo">
-    <h1>MPOP Clinical Trials - Dynamic Flowchart</h1>
+    <h1>STATIC - MPOP Clinical Trials - Dynamic Flowchart</h1>
   </div>
-  
+
   <div id="container">
     <div id="graph-panel">
       <div id="cy"></div>
@@ -44,13 +44,13 @@
         </select>
       </div>
       <button id="render-graph">Render Graph</button>
-      <!-- <button id="convert-csv">Convert CSV to JSON</button> -->
     </div>
   </div>
 
   <div id="log-panel">
     <h3>Logs:</h3>
-    <div id="logs"></div>
+    <div id="logs" style="overflow-y: auto; height: 100px; border: 1px solid #ccc; padding: 5px;"></div>
+    <button id="clear-logs" style="margin-top: 5px;">Clear Logs</button>
   </div>
 
   <script src="app.js"></script>

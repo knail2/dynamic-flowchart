@@ -378,3 +378,70 @@ for all the trial_codes, I want to enable a right click to open a window in a ne
             window.open(url, '_blank');
           }
         });
+
+
+---------
+
+I added another field in the csv called trial description. use this for the description attribution in the trial_code in the json. 
+
+oncology_category,study_type,trial_phase,therapy_line,trial_code,trial_description,hyperlink
+HN,Interventional,Metastatic Trials,Line1,GS-1811,blah blah,https://google.com
+
+for the mouse over and mouse off tip, use the ideas on this link as inspiration: https://stackoverflow.com/questions/54547927/show-and-hide-node-info-on-mouseover-in-cytoscape
+
+
+------
+
+
+the csv to json code needs to be updated to create unique IDs for trial_phase and for therapy_line
+
+for the trial_phase the ID needs to be a concatenation of the trial_phase label and the study_type label and the oncology_category label. heres an example:
+
+you are creating this:
+
+                "data": {
+                    "id": "Neoadjuvant Trials_HN",
+                    "label": "Neoadjuvant Trials",
+                    "type": "trial_phase",
+                    "color": "#ADD8E6",
+                    "outline": "black"
+                },
+
+
+it should be something like:
+
+
+                "data": {
+                    "id": "Neoadjuvant Trials_Interventional_HN",
+                    "label": "Neoadjuvant Trials",
+                    "type": "trial_phase",
+                    "color": "#ADD8E6",
+                    "outline": "black"
+                },
+
+
+similarly, the therapy_line ID needs to be a concatenation of the therapy line label, the trial_phase label  the study_type label and the oncology_category label. heres an example:
+
+you are creating this: 
+
+                "data": {
+                    "id": "Line1_HN",
+                    "label": "Line1",
+                    "type": "therapy_line",
+                    "color": "#90EE90",
+                    "outline": "black"
+                },
+
+
+it should be something like this:
+
+
+                "data": {
+                    "id": "Line1_Neoadjuvant Trials_Interventional_HN",
+                    "label": "Line1",
+                    "type": "therapy_line",
+                    "color": "#90EE90",
+                    "outline": "black"
+                },
+
+please print the fully updated app.py code in canvas

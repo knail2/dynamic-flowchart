@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const logsContainer = document.getElementById('logs');
   const renderGraphBtn = document.getElementById('render-graph');
   const convertCsvBtn = document.getElementById('convert-csv');
+  const clearLogsBtn = document.getElementById('clear-logs'); // New button
   const categorySelect = document.getElementById('oncology-category');
 
   let cy;
@@ -12,7 +13,14 @@ document.addEventListener('DOMContentLoaded', () => {
     logEntry.textContent = message;
     logsContainer.appendChild(logEntry);
     console.log(message);
+    logsContainer.scrollTop = logsContainer.scrollHeight; // Auto-scroll to the latest log
   };
+
+  // Clear Logs Button
+  clearLogsBtn.addEventListener('click', () => {
+    logsContainer.innerHTML = '';
+    console.log('Logs cleared.'); // Optional debugging log
+  });
 
   function isHidden(id) {
     return cy.getElementById(id).hasClass('hidden');
@@ -270,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const category = categorySelect.value;
     logMessage(`Rendering graph for category: ${category}`);
 
-    fetch('mpop-tidytable.json')
+    fetch('../data/mpop-tidytable.json')
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
