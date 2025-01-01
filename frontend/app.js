@@ -10,6 +10,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let cy;
 
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+  
+  async function sleep_and_log() {
+    console.log("Start");
+    await sleep(2000); // Wait for 2 seconds
+    console.log("End"); 
+  }
   const logMessage = (message) => {
     const logEntry = document.createElement('div');
     logEntry.textContent = message;
@@ -178,6 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .then((data) => {
         if (data && typeof data === 'object') {
+          sleep_and_log();
           renderGraph(data);
           logMessage(`Rendered graph for category: ${category}`);
         } else {

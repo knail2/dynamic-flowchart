@@ -18,8 +18,8 @@ LOGS_DIR = os.path.join(os.getcwd(), 'backend/logs')
 os.makedirs(LOGS_DIR, exist_ok=True)
 
 # Configuration flags
-logging_enabled = True
-debug_enabled = True
+logging_enabled = False
+debug_enabled = False
 
 # Valid CSS colors
 COLOR_MAP = {
