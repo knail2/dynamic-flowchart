@@ -15,7 +15,7 @@ jobs:
 
       - name: Build project
         run: |
-          cd frontend
+          cd frontend_static
           npm install # or yarn
           npm run build # or your build command
 
@@ -23,5 +23,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend
+          publish_dir: ./fs
 
