@@ -1,0 +1,393 @@
+expanding-fix.txt
+
+
+when I hit the render graph button on the index.html page, the graph panel renders the graph but the panel keeps slowly expanding to the right and to the bottom, pushing the panels on the right and the bottom out of the browser window. please deeply evaluate this code and tell me what the problem can be. please make recommendations on what I can specifically change in the code to avoid this expansion.
+
+
+here's the app.js code:
+
+----
+document.addEventListener('DOMContentLoaded', () => {
+  const cyContainer = document.getElementById('cy');
+  const logsContainer = document.getElementById('logs');
+  const renderGraphBtn = document.getElementById('render-graph');
+  const convertCsvBtn = document.getElementById('convert-csv');
+  const clearLogsBtn = document.getElementById('clear-logs'); // New button
+  const categorySelect = document.getElementById('oncology-category');
+
+  const BACKEND_URL = 'http://127.0.0.1:9999';
+
+  let cy;
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+  
+  async function sleep_and_log() {
+    console.log("Start");
+    await sleep(2000); // Wait for 2 seconds
+    console.log("End"); 
+  }
+  const logMessage = (message) => {
+    const logEntry = document.createElement('div');
+    logEntry.textContent = message;
+    logsContainer.appendChild(logEntry);
+    console.log(message);
+    logsContainer.scrollTop = logsContainer.scrollHeight; // Auto-scroll to the latest log
+  };
+
+  // Clear Logs Button
+  clearLogsBtn.addEventListener('click', () => {
+    logsContainer.innerHTML = '';
+    console.log('Logs cleared.'); // Optional debugging log
+  });
+
+  // Function to process CSV-to-JSON conversion
+  const convertCsvToJson = () => {
+    logMessage('Converting CSV to JSON with updated unique IDs...');
+
+    fetch(`${BACKEND_URL}/csv-to-json`)
+      .then((response) => {
+        logMessage(`Response status: ${response.status}`);
+        logMessage('CSV-to-JSON conversion completed.');
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .catch((err) => {
+        logMessage(`Error converting CSV: ${err.message}`);
+        console.error('Error details:', err);
+      });
+  };
+
+  const renderGraph = (data) => {
+    logMessage('API Response Data: ' + JSON.stringify(data, null, 2));
+
+    if (!data || !data.elements || !data.elements.nodes || !data.elements.edges) {
+      logMessage('Error: Invalid data received.');
+      return;
+    }
+
+    const elements = [
+      ...data.elements.nodes.map(node => ({
+        data: {
+          ...node.data,
+          label: node.data.label.replace(/\//g, '/ '), // Insert space after '/' for wrapping
+        },
+        classes: categorySelect.value === 'All' && node.data.type !== 'oncology_category' ? 'hidden' : ''
+      })),
+      ...data.elements.edges.map(edge => ({
+        data: edge.data,
+        classes: categorySelect.value === 'All' ? 'hidden' : ''
+      }))
+    ];
+
+    if (categorySelect.value === 'All_fully_expanded') {
+      elements.forEach(element => {
+        element.classes = '';
+      });
+    }
+
+    cy = cytoscape({
+      container: cyContainer,
+      elements: elements,
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'shape': 'round-rectangle',
+            'background-color': 'data(color)',
+            'border-color': 'data(outline)',
+            'label': 'data(label)',
+            'text-valign': 'center',
+            'font-size': '12px',
+            'padding': '10px',
+            "width": 100,
+            "height": 40,
+            "text-wrap": "wrap",
+            "text-max-width": "90px",
+            "color": "#000",
+            "border-width": 1
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': 2,
+            'line-color': '#ccc',
+            'target-arrow-shape': 'triangle',
+            'target-arrow-color': '#ccc',
+            'arrow-scale': 1.2,
+            'curve-style': 'bezier'
+          }
+        },
+        {
+          "selector": ".hidden",
+          "style": {
+            "display": "none"
+          }
+        }
+      ],
+      layout: {
+        name: 'dagre',
+        rankDir: 'LR',
+        nodeSep: 20,
+        edgeSep: 10,
+        rankSep: 20
+      }
+    });
+
+    cy.on('mouseover', 'node[type="trial_code"]', function (evt) {
+      const node = evt.target;
+      const description = node.data('description');
+      const tooltip = document.createElement('div');
+      tooltip.id = 'tooltip';
+      tooltip.textContent = description;
+      tooltip.style.position = 'absolute';
+      tooltip.style.left = evt.originalEvent.pageX + 'px';
+      tooltip.style.top = evt.originalEvent.pageY + 'px';
+      tooltip.style.padding = '5px';
+      tooltip.style.backgroundColor = '#fff';
+      tooltip.style.border = '1px solid #000';
+      tooltip.style.zIndex = 1000;
+      document.body.appendChild(tooltip);
+    });
+
+    cy.on('mouseout', 'node[type="trial_code"]', function () {
+      const tooltip = document.getElementById('tooltip');
+      if (tooltip) {
+        tooltip.remove();
+      }
+    });
+
+    cy.on('cxttap', 'node[type="trial_code"]', function (e) {
+      const hyperlink = this.data('hyperlink');
+      if (hyperlink) {
+        window.open(hyperlink, '_blank');
+      }
+    });
+
+    cy.on('tap', 'node', (evt) => {
+      const nodeId = evt.target.id();
+      logMessage(`Node clicked: ${nodeId}`);
+
+      const clickedNode = cy.getElementById(nodeId);
+
+      if (clickedNode) {
+        logMessage(`Handling click for node: ${nodeId}`);
+        toggleDownstream(nodeId);
+      }
+    });
+
+    logMessage('Updated Cytoscape Data: ' + JSON.stringify(elements, null, 2));
+  };
+
+  renderGraphBtn.addEventListener('click', () => {
+    const category = categorySelect.value;
+    logMessage(`Fetching data for category: ${category}`);
+    fetch(`${BACKEND_URL}/oncology_category/${category}`)
+      .then((response) => {
+        logMessage(`Response status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data && typeof data === 'object') {
+          sleep_and_log();
+          renderGraph(data);
+          logMessage(`Rendered graph for category: ${category}`);
+        } else {
+          logMessage('Error: Unexpected response format.');
+        }
+      })
+      .catch((err) => {
+        logMessage(`Error rendering graph: ${err.message}`);
+        console.error('Error details:', err);
+      });
+  });
+
+  convertCsvBtn.addEventListener('click', convertCsvToJson);
+});
+
+
+----
+
+here's the index.html code:
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FE dynamic - MPOP Clinical Trials - Dynamic Flowchart</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Cytoscape Libraries -->
+  <script src="libs/cytoscape.min.js"></script>
+  <script src="libs/dagre.min.js"></script>
+  <script src="libs/cytoscape-dagre.js"></script>
+  <script src="libs/popper.min.js"></script>
+  <script src="libs/tippy.umd.js"></script>
+  <script src="libs/cytoscape-popper.js"></script>
+</head>
+<body>
+  <div id="header">
+    <img src="popcorn-logo.jpg" alt="MPOP Logo">
+    <h1>dynamic - MPOP Clinical Trials - Dynamic Flowchart</h1>
+  </div>
+  
+  <div id="container">
+    <div id="graph-panel">
+      <div id="cy"></div>
+    </div>
+    <div id="controls-panel">
+      <div>
+        <label for="oncology-category">Oncology Category:</label>
+        <select id="oncology-category">
+          <option value="All">All</option>
+          <option value="All_fully_expanded">All Fully Expanded</option>
+          <option value="Breast">Breast</option>
+          <option value="GI">GI</option>
+          <option value="GU">GU</option>
+          <option value="Gyn_Onc">Gyn/Onc</option>
+          <option value="HN">HN</option>
+          <option value="Lung_Thoracic">Lung_Thoracic</option>
+          <option value="Melanoma_Cutaneous_Sarcoma">Melanoma_Cutaneous_Sarcoma</option>
+          <option value="Rad_Onc">Rad_Onc</option>
+          <option value="Tumor_Agnostic">Tumor_Agnostic</option>
+        </select>
+      </div>
+      <button id="render-graph">Render Graph</button>
+      <button id="convert-csv">Convert CSV to JSON</button>
+      <button id="clear-logs">Clear Logs</button>
+    </div>
+  </div>
+
+  <div id="log-panel">
+    <h3>Logs:</h3>
+    <div id="logs" style="overflow-y: auto; max-height: 200px;"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+
+
+
+
+----
+
+here's the styles.css code
+
+/* General body styles */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Header styling */
+#header {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #0078d4;
+  color: white;
+}
+
+#header img {
+  width: 50px;
+  height: 50px;
+  margin-right: 10px;
+}
+
+#header h1 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+/* Container for the graph and controls */
+#container {
+  display: flex;
+  flex: 1;
+}
+
+#graph-panel {
+  flex: 9;
+  background-color: #ffffff;
+  padding: 10px;
+}
+
+#cy {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #ddd;
+}
+
+#controls-panel {
+  flex: 3;
+  background-color: #f1f1f1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#controls-panel label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+#controls-panel select,
+#controls-panel button {
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+#controls-panel button {
+  background-color: #0078d4;
+  color: white;
+  cursor: pointer;
+}
+
+#controls-panel button:hover {
+  background-color: #005a9e;
+}
+
+/* Log panel styling */
+#log-panel {
+  background-color: #f9f9f9;
+  padding: 10px;
+  border-top: 1px solid #ddd;
+  height: 10%;
+  overflow-y: auto;
+  resize: vertical; /* Enables dragging to resize */
+  min-height: 50px; /* Prevent collapsing too much */
+  max-height: 50%; /* Limit expansion */
+}
+
+#log-panel h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #555;
+}
+
+#logs {
+  font-size: 0.8rem;
+  color: #777;
+  overflow-y: auto;
+  max-height: 100%;
+}
+

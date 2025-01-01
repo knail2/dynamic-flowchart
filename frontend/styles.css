@@ -38,8 +38,11 @@ body {
 
 #graph-panel {
   flex: 9;
-  background-color: #ffffff;
   padding: 10px;
+  /* Subtract the header height + any extra margin/padding from 100vh */
+  height: calc(100vh - 80px);
+  box-sizing: border-box; /* Ensures padding doesn't expand the panel beyond 100vh minus offset */
+  overflow: hidden;        /* or `overflow: auto;` if you prefer scrollbars */
 }
 
 #cy {
