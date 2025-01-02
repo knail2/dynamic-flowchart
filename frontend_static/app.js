@@ -66,6 +66,20 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const filterByCategory = (data, category) => {
+    logMessage(`Selected category before replace: ${category}`);
+
+    // Replace all underscores globally with slashes
+    let categoryName = category.replace(/_/g, '/');
+    logMessage(`Category after replace: ${categoryName}`);
+
+    if (category === 'Tumor_Agnostic') {
+      categoryName = 'Tumor Agnostic';
+    }
+
+    if (categoryName.includes('Melanoma')) {
+      logMessage(`Category includes Melanoma: ${categoryName}`);
+    }
+
     if (category === 'All (active trials)') {
       const trialCodeNodes = new Set();
       const lineageNodes = new Set();
@@ -133,22 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return data;
     }
 
-    if (category === 'All') {
-      // Show only oncology_category nodes for "All"
-      data.elements.nodes.forEach(node => {
-        if (node.data.type === 'oncology_category') {
-          node.data.label = node.data.label.replace(/\//g, '/ ');
-          delete node.classes;
-        } else {
-          node.classes = 'hidden';
-        }
-      });
-      data.elements.edges.forEach(edge => {
-        edge.classes = 'hidden';
-      });
-      return data;
-    }
-
     if (category === 'All_fully_expanded') {
       // Show everything for "All Fully Expanded"
       data.elements.nodes.forEach(node => {
@@ -163,11 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const filteredNodes = new Set();
     const filteredEdges = [];
-
-    let categoryName = category.replace('_', '/');
-    if (category === 'Tumor_Agnostic') {
-      categoryName = 'Tumor Agnostic';
-    }
 
     data.elements.edges.forEach(edge => {
       if (edge.data.source.includes(categoryName)) {
@@ -198,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const renderGraph = (data, category) => {
-    logMessage('Local JSON Data: ' + JSON.stringify(data, null, 2));
+    //logMessage('Local JSON Data: ' + JSON.stringify(data, null, 2));
 
     if (!data || !data.elements || !data.elements.nodes || !data.elements.edges) {
       logMessage('Error: Invalid data received.');
